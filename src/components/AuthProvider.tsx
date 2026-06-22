@@ -4,13 +4,12 @@ import {
   createContext,
   useCallback,
   useContext,
-  useMemo,
-  useSyncExternalStore,
+  useEffect,
+  useState,
 } from "react";
 import { login as apiLogin, logout as apiLogout, signup as apiSignup } from "@/lib/api";
 import {
-  clearAuth,
-  getAuthSnapshot,
+  getStoredUser,
   saveAuth,
   subscribeAuth,
 } from "@/lib/auth-storage";
@@ -26,21 +25,24 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const user = useSyncExternalStore(
-    subscribeAuth,
-    getAuthSnapshot,
-    () => null
-  );
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    setUser(getStoredUser());
+    return subscribeAuth(() => setUser(getStoredUser()));
+  }, []);
 
   const login = useCallback(async (email: string, password: string) => {
     const data = await apiLogin(email, password);
     saveAuth(data.user, data.accessToken, data.refreshToken);
+    setUser(data.user);
   }, []);
 
   const signup = useCallback(
     async (name: string, email: string, password: string) => {
       const data = await apiSignup(name, email, password);
       saveAuth(data.user, data.accessToken, data.refreshToken);
+      setUser(data.user);
     },
     []
   );
@@ -48,17 +50,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(async () => {
     try {
       await apiLogout();
-    } catch {
-      clearAuth();
+    } finally {
+      setUser(null);
     }
   }, []);
 
-  const value = useMemo(
-    () => ({ user, login, signup, logout }),
-    [user, login, signup, logout]
+  return (
+    <AuthContext.Provider value={{ user, login, signup, logout }}>
+      {children}
+    </AuthContext.Provider>
   );
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

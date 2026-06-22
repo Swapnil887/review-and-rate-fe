@@ -17,6 +17,7 @@ async function refreshAccessToken() {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ refreshToken }),
+    cache: "no-store",
   });
 
   if (!response.ok) {
@@ -51,6 +52,7 @@ async function apiFetch<T>(
   const response = await fetch(`${API_URL}${path}`, {
     ...options,
     headers,
+    cache: "no-store",
   });
 
   if (response.status === 401 && retry) {
@@ -201,6 +203,7 @@ export async function uploadImage(file: File) {
   const response = await fetch("/api/upload", {
     method: "POST",
     body: formData,
+    cache: "no-store",
   });
 
   const data = await response.json();

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Header from "@/components/Header";
 import CompanyCard from "@/components/CompanyCard";
 import AddCompanyModal from "@/components/AddCompanyModal";
@@ -61,21 +61,14 @@ export default function HomePage() {
   }, [search, city, location]);
 
   useEffect(() => {
-    const timer = setTimeout(fetchCompanies, 300);
-    return () => clearTimeout(timer);
+    fetchCompanies();
   }, [fetchCompanies]);
 
-  const sortedCompanies = useMemo(() => {
-    const list = [...companies];
-    list.sort((a, b) => {
-      if (sortBy === "name") return a.name.localeCompare(b.name);
-      if (sortBy === "city") return a.city.localeCompare(b.city);
-      return (
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-    });
-    return list;
-  }, [companies, sortBy]);
+  const sortedCompanies = [...companies].sort((a, b) => {
+    if (sortBy === "name") return a.name.localeCompare(b.name);
+    if (sortBy === "city") return a.city.localeCompare(b.city);
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
 
   return (
     <div className="min-h-screen bg-[#f8f9fc]">
